@@ -65,7 +65,7 @@ app
 		}
 
 		SERVER_PUBLIC_KEY = newPublicServerKey;
-		writeFileSync(join(__dirname, '../', '/server_rsa_key.pub'), newPublicServerKey);
+		writeFileSync(join(__dirname, '../', 'keys/server_rsa_key.pub'), newPublicServerKey);
 
 		const json = {
 			message: SUCCESS,
