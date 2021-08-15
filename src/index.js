@@ -3,10 +3,21 @@ require('dotenv').config();
 const express = require('express');
 const { join } = require('path');
 const { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } = require('fs');
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, join(__dirname, '../', 'files'));
+	},
+	filename: (req, file, cb) => {
+		cb(null, file.originalname);
+	},
+});
+const upload = multer({ storage });
 
 const { generateKeys, unpack, pack } = require('./crypt.js');
 
-const { NOT_ENCRYPTED_REQUEST, ALREADY_CONNECTED_TO_PANEL, NOT_CONNECTED_TO_PANEL, NO_SUCH_FILE_OR_DIR, ALREADY_SUCH_FILE_OR_DIR, INVALID_BODY, SUCCESS } = require('../responses.json');
+const { NOT_ENCRYPTED_REQUEST, ALREADY_CONNECTED_TO_PANEL, NOT_CONNECTED_TO_PANEL, NO_SUCH_FILE_OR_DIR, INVALID_BODY, SUCCESS } = require('../responses.json');
 
 const {
 	NODE_PORT,
@@ -114,38 +125,7 @@ app
 		const encryptedjson = pack(SERVER_PUBLIC_KEY, json);
 		return res.status(200).json(encryptedjson);
 	})
-	.post('/files/upload', async (req, res) => {
-		if (!req.body || !req.body.encrypted || !req.body.key) return res.status(400).json({ message: NOT_ENCRYPTED_REQUEST, success: false });
-		if (!SERVER_PUBLIC_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
-
-		const encryptedbody = req.body;
-		const body = JSON.parse(unpack(encryptedbody));
-
-
-		if (!body.id || !body.content) {
-			const json = {
-				message: INVALID_BODY,
-				success: false,
-			};
-			const encryptedjson = pack(SERVER_PUBLIC_KEY, json);
-
-			return res.status(400).json(encryptedjson);
-		}
-
-		const dir = join(__dirname, '../', 'files');
-
-		if (existsSync(`${dir}/${body.id}`)) {
-			const json = {
-				message: ALREADY_SUCH_FILE_OR_DIR,
-				success: false,
-			};
-			const encryptedjson = pack(SERVER_PUBLIC_KEY, json);
-
-			return res.status(400).json(encryptedjson);
-		}
-
-		writeFileSync(`${dir}/${body.id}`, Buffer.from(body.content.data), 'binary');
-
+	.post('/files/upload', upload.single('file'), async (req, res) => {
 		const json = {
 			message: SUCCESS,
 			success: true,
