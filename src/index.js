@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const { join } = require('path');
-const { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } = require('fs');
+const { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync, createReadStream } = require('fs');
 const multer = require('multer');
 
 const storage = multer.diskStorage({
@@ -163,16 +163,8 @@ app
 			return res.status(400).json(encryptedjson);
 		}
 
-		const content = readFileSync(`${dir}/${body.id}`);
-
-		const json = {
-			content,
-			message: SUCCESS,
-			success: true,
-		};
-
-		const encryptedjson = pack(SERVER_PUBLIC_KEY, json);
-		return res.status(200).json(encryptedjson);
+		return createReadStream(`${dir}/${body.id}`).pipe(res);
+		// return res.status(200).send();
 	})
 	.listen(port, (err) => {
 		if (err) console.log(err);
