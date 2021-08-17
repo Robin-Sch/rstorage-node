@@ -20,9 +20,11 @@ const upload = multer({ storage });
 const { ALREADY_CONNECTED_TO_PANEL, NOT_CONNECTED_TO_PANEL, NO_SUCH_FILE_OR_DIR, INVALID_BODY, SUCCESS } = require('../responses.json');
 
 const {
+	NODE_COMMONNAME,
 	NODE_PORT,
 } = process.env;
 
+const commonName = NODE_COMMONNAME || '127.0.0.1';
 const port = NODE_PORT || 3001;
 const dir = join(__dirname, '../', 'files');
 
@@ -34,7 +36,7 @@ let NODE_CERT = existsSync(join(__dirname, '../', 'keys/node.cert')) ? readFileS
 let PANEL_KEY = existsSync(join(__dirname, '../', 'keys/panel')) ? readFileSync(join(__dirname, '../', 'keys/panel'), 'utf8') : null;
 
 if (!NODE_KEY || !NODE_CA || !NODE_CERT) {
-	return createCertificate({ selfSigned: true }, (err, keys) => {
+	return createCertificate({ selfSigned: true, commonName }, (err, keys) => {
 		if (err) throw err;
 
 		NODE_KEY = keys.serviceKey;
