@@ -33,7 +33,7 @@ if (!existsSync(join(__dirname, '../', 'files'))) mkdirSync(join(__dirname, '../
 let NODE_KEY = existsSync(join(__dirname, '../', 'keys/node.key')) ? readFileSync(join(__dirname, '../', 'keys/node.key'), 'utf8') : null;
 let NODE_CA = existsSync(join(__dirname, '../', 'keys/ca.key')) ? readFileSync(join(__dirname, '../', 'keys/ca.key'), 'utf8') : null;
 let NODE_CERT = existsSync(join(__dirname, '../', 'keys/node.cert')) ? readFileSync(join(__dirname, '../', 'keys/node.cert'), 'utf8') : null;
-let PANEL_KEY = existsSync(join(__dirname, '../', 'keys/panel')) ? readFileSync(join(__dirname, '../', 'keys/panel'), 'utf8') : null;
+let PANEL_KEY = existsSync(join(__dirname, '../', 'keys/panel.key')) ? readFileSync(join(__dirname, '../', 'keys/panel.key'), 'utf8') : null;
 
 if (!NODE_KEY || !NODE_CA || !NODE_CERT) {
 	return createCertificate({ selfSigned: true, commonName }, (err, keys) => {
@@ -47,7 +47,7 @@ if (!NODE_KEY || !NODE_CA || !NODE_CERT) {
 		writeFileSync(join(__dirname, '../', 'keys/ca.key'), NODE_CA);
 		writeFileSync(join(__dirname, '../', 'keys/node.cert'), NODE_CERT);
 
-		console.log(`To install this node, login on the panel, and enter the IP and port (${port}) of this server!`);
+		console.log(`To install this node, login on the panel, and enter the IP or hostname (${commonName}) and port (${port}) of this server!`);
 		console.log('The certificate can be found below! (copy the -----BEGIN CERTIFICATE----- and -----END CERTIFICATE----- too!)');
 		console.log('');
 		return console.log(NODE_CERT);
@@ -69,7 +69,7 @@ app
 
 		if (!PANEL_KEY) {
 			PANEL_KEY = key;
-			writeFileSync(join(__dirname, '../', 'keys/panel'), key);
+			writeFileSync(join(__dirname, '../', 'keys/panel.key'), key);
 		}
 
 		return res.status(200).json({ message: SUCCESS, success: true });
