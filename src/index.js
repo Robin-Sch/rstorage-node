@@ -74,8 +74,24 @@ app
 
 		return res.status(200).json({ message: SUCCESS, success: true });
 	})
+	.post('/deinit', (req, res) => {
+		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
+
+		const key = req.body.key;
+		if (key !== PANEL_KEY) {
+			return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
+		}
+
+		PANEL_KEY = null;
+		unlinkSync(join(__dirname, '../', 'keys/panel.key'));
+
+		return res.status(200).json({ message: SUCCESS, success: true });
+	})
 	.post('/files/delete', async (req, res) => {
 		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
+
+		const key = req.body.key;
+		if (key !== PANEL_KEY) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
 
 		const id = req.body.id;
 		if (!id) return res.status(400).json({ message: INVALID_BODY, success: false });
@@ -87,6 +103,12 @@ app
 	})
 	.post('/files/upload', upload.single('file'), async (req, res) => {
 		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
+
+		// console.log(req.body, req.fields, req.files, req.file);
+
+		// const key = req.body.key;
+		// if (key !== PANEL_KEY) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
+
 		const json = {
 			message: SUCCESS,
 			success: true,
@@ -95,6 +117,9 @@ app
 	})
 	.post('/files/download', async (req, res) => {
 		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
+
+		const key = req.body.key;
+		if (key !== PANEL_KEY) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
 
 		const id = req.body.id;
 		if (!id) return res.status(400).json({ message: INVALID_BODY, success: false });
