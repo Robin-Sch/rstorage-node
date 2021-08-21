@@ -7,6 +7,8 @@ const multer = require('multer');
 const { createCertificate } = require('pem');
 const { createServer } = require('https');
 
+const IPs = [];
+
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
 		cb(null, join(__dirname, '../', 'files'));
@@ -67,6 +69,9 @@ app
 
 		if (PANEL_KEY && PANEL_KEY !== key) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
 
+		const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+		if (!IPs.includes(ip)) IPs.push(ip);
+
 		if (!PANEL_KEY) {
 			PANEL_KEY = key;
 			writeFileSync(join(__dirname, '../', 'keys/panel.key'), key);
@@ -90,8 +95,9 @@ app
 	.post('/files/delete', async (req, res) => {
 		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
 
+		const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 		const key = req.body.key;
-		if (key !== PANEL_KEY) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
+		if (key !== PANEL_KEY || !IPs.includes(ip)) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
 
 		const id = req.body.id;
 		if (!id) return res.status(400).json({ message: INVALID_BODY, success: false });
@@ -104,10 +110,9 @@ app
 	.post('/files/upload', upload.single('file'), async (req, res) => {
 		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
 
-		// console.log(req.body, req.fields, req.files, req.file);
-
-		// const key = req.body.key;
-		// if (key !== PANEL_KEY) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
+		const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+		const key = req.body.key;
+		if (key !== PANEL_KEY || !IPs.includes(ip)) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
 
 		const json = {
 			message: SUCCESS,
@@ -118,8 +123,9 @@ app
 	.post('/files/download', async (req, res) => {
 		if (!PANEL_KEY) return res.status(400).json({ message: NOT_CONNECTED_TO_PANEL, success: false, reconnect: true });
 
+		const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 		const key = req.body.key;
-		if (key !== PANEL_KEY) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
+		if (key !== PANEL_KEY || !IPs.includes(ip)) return res.status(403).json({ message: ALREADY_CONNECTED_TO_PANEL, success: false });
 
 		const id = req.body.id;
 		if (!id) return res.status(400).json({ message: INVALID_BODY, success: false });
